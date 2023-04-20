@@ -39,7 +39,9 @@
           <!-- {{movie.description}} data from the db   -->
         <p class="overview">{{movie.description}}</p>
 
-        <a href="#" class="button">Update</a>
+        <!-- "Update" button for submit edit -->
+        <!-- Call the function "rate_movie" from main.py and use the movie.id from above -->
+        <a href="{{ url_for('rate_movie', id=movie.id) }}" class="button">Update</a>
         <a href="#" class="button delete-button">Delete</a>
       </div>
     </div>
