@@ -42,7 +42,8 @@
         <!-- "Update" button for submit edit -->
         <!-- Call the function "rate_movie" from main.py and use the movie.id from above -->
         <a href="{{ url_for('rate_movie', id=movie.id) }}" class="button">Update</a>
-        <a href="#" class="button delete-button">Delete</a>
+        <!-- Call the function "delete_movie" from main.py and use the movie.id from above -->
+        <a href="{{ url_for('delete_movie', id=movie.id) }}" class="button delete-button">Delete</a>
       </div>
     </div>
   </div>

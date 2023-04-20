@@ -88,6 +88,16 @@ def rate_movie():
     return render_template("edit.html", movie=movie, form=form)
 
 
+@app.route("/delete")
+def delete_movie():
+    # request will get the id from page that user clicked
+    movie_id = request.args.get("id")
+    movie = Movie.query.get(movie_id)
+    # Delete it in DB with SQLAlchemy
+    db.session.delete(movie)
+    db.session.commit()
+    return redirect(url_for("home"))
+
 
 
 
