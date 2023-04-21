@@ -13,9 +13,14 @@
 {% block content %}
 <div class="container">
     <h1 class="heading">Select Movie</h1>
+
+  <!-- loop and print a list that the data by "options" from main.py add function   -->
+  {% for movie in options: %}
   <p>
-    <a href="#"> MOVIE TITLE - MOVIE RELEASE DATE</a>
+    <!-- Here have a list for user click, when click a movie, it will tragger find_movie function in main.py -->
+    <a href="{{ url_for('find_movie', id=movie.id) }} ">{{ movie.title }} - {{movie.release_date}}</a>
   </p>
+  {% endfor %}
 
 </div>
 {% endblock %}

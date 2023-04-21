@@ -6,6 +6,12 @@ from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 import requests
 
+# TMDB API
+MOVIE_DB_SEARCH_URL = "https://api.themoviedb.org/3/search/movie"
+# API Key here
+MOVIE_DB_API_KEY = "a0986ab45910f9d05a4a8e31a50c5b38" 
+MOVIE_DB_INFO_URL = "https://api.themoviedb.org/3/movie"
+MOVIE_DB_IMAGE_URL = "https://image.tmdb.org/t/p/w500"
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '8BYkEfBA6O6donzWlSihBXox7C0sKR6b'
@@ -55,9 +61,27 @@ db.create_all()
 
 @app.route("/")
 def home():
-	# Pass the data to the index.html
-    # Call the all data from the all_movie.db
-    all_movies = Movie.query.all()
+    # Pass the data to the index.html
+
+    ### Order the movie ###
+    # Call all data from the all_movie.db by "class Movie"
+    # This line creates a list of all the movies sorted by "rating"(It means 9.9, 8.6)
+    # Movie.rating is get the rating data from the "class Movie"
+    all_movies = Movie.query.order_by(Movie.rating).all()
+	
+    ### Show the big number of ranking ###
+    #This line loops through all the movies
+    for i in range(len(all_movies)):
+        # This line gives each movie a new "ranking"(It means 1,2,3,4) reversed from their order in all_movies
+        # And it will as a big number to show on the poster
+        # It will start from 0, i=0, 
+        # let say we have 10 movies, len(all_movies)=10
+        # all_movies[0].ranking = 10 - 0
+        all_movies[i].ranking = len(all_movies) - i
+        # So, the Order 0 is the Ranking 10, the Order 9 is the Ranking 1, 
+        # index.html will through {{ movie.ranking }} to get the Ranking number and display it on the poster
+    db.session.commit()    
+
     # Loop through all data and pass the data to index.html
     # "movies" is the variable that pass the data to the index.html
     return render_template("index.html", movies=all_movies)
@@ -88,6 +112,8 @@ def rate_movie():
     return render_template("edit.html", movie=movie, form=form)
 
 
+
+### Delete function ###
 @app.route("/delete")
 def delete_movie():
     # request will get the id from page that user clicked
@@ -100,9 +126,50 @@ def delete_movie():
 
 
 
+### Add function ###
+class FindMovieForm(FlaskForm):
+    # This is the input fields on the page
+    title = StringField("Movie Title", validators=[DataRequired()])
+    # This is the submit button on the page
+    submit = SubmitField("Add Movie")
+
+
+@app.route("/add", methods=["GET", "POST"])
+def add_movie():
+    form = FindMovieForm()
+    # Get the Movie data from TMDB by API
+    if form.validate_on_submit():
+        movie_title = form.title.data
+        response = requests.get(MOVIE_DB_SEARCH_URL, params={"api_key": MOVIE_DB_API_KEY, "query": movie_title})
+        data = response.json()["results"]
+        # "option" is the variable that pass the data to the select.html
+        return render_template("select.html", options=data)
+      
+    return render_template("add.html", form=form)
 
 
 
+### Find function ###
+@app.route("/find")
+def find_movie():
+    movie_api_id = request.args.get("id")
+    if movie_api_id:
+        movie_api_url = f"{MOVIE_DB_INFO_URL}/{movie_api_id}"
+        #The language parameter is optional, if you were making the website for a different audience 
+        #e.g. Hindi speakers then you might choose "hi-IN"
+        response = requests.get(movie_api_url, params={"api_key": MOVIE_DB_API_KEY, "language": "en-US"})
+        data = response.json()
+        new_movie = Movie(
+            title=data["title"],
+            #The data in release_date includes month and day, we will want to get rid of.
+            year=data["release_date"].split("-")[0],
+            img_url=f"{MOVIE_DB_IMAGE_URL}{data['poster_path']}",
+            description=data["overview"]
+        )
+        db.session.add(new_movie)
+        db.session.commit()
+        # Redirect and pass the new_movie's id to rate_movie function
+        return redirect(url_for("rate_movie", id=new_movie.id))
 
 
 
